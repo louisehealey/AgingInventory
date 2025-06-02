@@ -2,7 +2,46 @@
 This Power BI report analyzes aging inventory by categorizing total cost and stock quantities into time-based buckets.These buckets allow users to track stock movement, identify slow-moving items, and optimize inventory turnover to improve efficiency and reduce waste.
 
 Since most components are not serialized, tracking individual part movement is a challenge. To estimate how long stock has remained at the facility, this report leverages Purchase Order Transactions and assumes a FIFO (First-In, First-Out) inventory management approach.
-| ACTION DATE/TIME  | PART_ID  | PO_ID   | Previous Qty | Quantity | Total Qty At PO Date |
+
+## Data Model Overview
+
+This data model integrates multiple tables to effectively manage and analyze inventory aging. 
+
+- **`PART_MANAGER`**: Contains detailed attributes of each part including description, commodity and unit cost.
+- **`INVENTORY_TRANSACTION`**: Purchase order (PO) transactions, enabling the tracking and determin ation of stock age by invidual transactions.
+- **`STOCK_STATUS`**: Provides an overview of total `ON_HAND_QTY` for each part, ensuring visibility into current inventory levels.
+- **`AGING_INVENTORY_MATRIXS`**: A comprehensive table that consolidates the data in the above tables to a single table that summarizes the data. 
+
+This structured approach enables efficient analysis of inventory trends, stock utilization, and aging patterns to improve operational efficiency.
+
+## How to Calculate the Time Based Buckets?
+The calculated column below determines how old each transaction is based on it's `ACTION DATE/TIME`
+```
+DateBucket =
+SWITCH(
+    TRUE(),
+    DATEDIFF([ACTION DATE/TIME], TODAY(), DAY) < 30, 1,
+    DATEDIFF([ACTION DATE/TIME], TODAY(), DAY) >= 30 && DATEDIFF([ACTION DATE/TIME], TODAY(), DAY) < 60, 2,
+    DATEDIFF([ACTION DATE/TIME], TODAY(), DAY) >= 60 && DATEDIFF([ACTION DATE/TIME], TODAY(), DAY) < 90, 3,
+    DATEDIFF([ACTION DATE/TIME], TODAY(), DAY) >= 90 && DATEDIFF([ACTION DATE/TIME], TODAY(), DAY) < 180, 4,
+    DATEDIFF([ACTION DATE/TIME], TODAY(), DAY) >= 180 && DATEDIFF([ACTION DATE/TIME], TODAY(), DAY) < 365, 5,
+    DATEDIFF([ACTION DATE/TIME], TODAY(), DAY) >= 365,6
+)
+```
+## Inventory Aging Process
+
+Starting with the current `ON_HAND_QTY` of a specified part, the most recent purchase order (`PO`) transaction quantity is subtracted. The transaction is then classified into a `Date bucket` based on its corresponding `ACTION DATE/TIME` value. This process continues until the total `ON_HAND_QTY` is accounted for.
+
+### Example Calculation
+
+In the following example, the `Total Qty At PO Date` for the maximum `ACTION DATE/TIME` matches the `ON_HAND_QTY` recorded in the `STOCK_STATUS` table for `PART_ID`: **PHN1041**. The `PO_Quantity` is then deducted, yielding the `Previous Qty` value: 1404 - 20 = 1348. The next PO transaction is then subtracted from the `Previous Qty`, continuing the process of inventory depletion.
+
+
+
+
+
+
+| ACTION DATE/TIME  | PART_ID  | PO_ID   | Previous Qty | PO_Quantity | Total Qty At PO Date |
 |------------------|---------|--------|--------------|----------|----------------------|
 | 5/8/2025 4:12   | PHN1041 | 1406373 | 1384        | 20       | 1404                 |
 | 5/8/2025 2:20   | PHN1041 | 1406373 | 1364        | 20       | 1384                 |
