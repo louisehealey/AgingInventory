@@ -1,5 +1,5 @@
 # Aging Inventory
-This Power BI report analyzes aging inventory by categorizing total cost and stock quantities into time-based buckets.These buckets allow users to track stock movement, identify slow-moving items, and optimize inventory turnover to improve efficiency and reduce waste.
+This Power BI report analyzes aging inventory by categorizing total cost and stock quantities into time-based buckets. These buckets allow users to track stock movement, identify slow-moving items, and optimize inventory turnover to improve efficiency and reduce waste.
 
 Since most components are not serialized, tracking individual part movement is a challenge. To estimate how long stock has remained at the facility, this report leverages Purchase Order Transactions and assumes a FIFO (First-In, First-Out) inventory management approach.
 
@@ -8,9 +8,9 @@ Since most components are not serialized, tracking individual part movement is a
 This data model integrates multiple tables to effectively manage and analyze inventory aging. 
 
 - **`PART_MANAGER`**: Contains detailed attributes of each part including description, commodity and unit cost.
-- **`INVENTORY_TRANSACTION`**: Purchase order (PO) transactions, enabling the tracking and determin ation of stock age by invidual transactions.
+- **`INVENTORY_TRANSACTION`**: Log of inventory transactions, used tohe tracking and  of stock age by invidual transactions.
 - **`STOCK_STATUS`**: Provides an overview of total `ON_HAND_QTY` for each part, ensuring visibility into current inventory levels.
-- **`AGING_INVENTORY_MATRIXS`**: A comprehensive table that consolidates the data in the above tables to a single table that summarizes the data. 
+- **`AGING_INVENTORY_MATRIXS`**: A Matrix table that consolidates the data in the above tables to a single table that summarizes the data. 
 
 This structured approach enables efficient analysis of inventory trends, stock utilization, and aging patterns to improve operational efficiency.
 
