@@ -20,7 +20,7 @@ Since most components are not serialized, tracking individual part movement is a
 This data model integrates multiple tables to effectively manage and analyze inventory aging. 
 
 - **`PART_MANAGER`**: Contains detailed attributes of each part including description, commodity and unit cost.
-- **`INVENTORY_TRANSACTION`**: Log of inventory transactions, used tohe tracking and  of stock age by invidual transactions.
+- **`INVENTORY_TRANSACTION`**: Log of inventory transactions used for tracking stock age by individual transactions.
 - **`STOCK_STATUS`**: Provides an overview of total `ON_HAND_QTY` for each part, ensuring visibility into current inventory levels.
 - **`AGING_INVENTORY_MATRIX`**: A Matrix table that consolidates the data in the above tables to a single table that summarizes the data. 
 
@@ -49,40 +49,49 @@ Starting with the current `ON_HAND_QTY` of a specified part, the most recent pur
 
 ### Example Calculation
 
-In the following example, the `Total Qty At PO Date` for the maximum `ACTION DATE/TIME` matches the `ON_HAND_QTY` recorded in the `STOCK_STATUS` table for `PART_ID`: **PHN1041**. The `PO_Quantity` is then deducted, yielding the `Previous Qty` value: 1404 - 20 = 1348. The next PO transaction is then subtracted from the `Previous Qty`, continuing the process of inventory depletion.
+In this example, the `Total_Qty_At_PO_Date` for the latest `ACTION_DATE/TIME` aligns with the `ON_HAND_QTY` recorded in the `STOCK_STATUS` table for `PART_ID`: **PHN1041**.
 
-| ACTION DATE/TIME  | PART_ID  | PO_ID   | Previous Qty | PO_Quantity | Total_Qty_At_PO_Date |
-|------------------|---------|--------|--------------|----------|----------------------------|
-| 5/8/2025 4:12   | PHN1041 | 1406373 | 1384        | 20       | 1404                 |
-| 5/8/2025 2:20   | PHN1041 | 1406373 | 1364        | 20       | 1384                 |
-| 5/5/2025 3:28   | PHN1041 | 1407370 | 1354        | 10       | 1364                 |
-| 5/5/2025 3:11   | PHN1041 | 1407370 | 1339        | 15       | 1354                 |
-| 5/5/2025 2:34   | PHN1041 | 1407370 | 1324        | 15       | 1339                 |
-| 5/5/2025 1:52   | PHN1041 | 1407370 | 1314        | 10       | 1324                 |
-| 5/5/2025 1:39   | PHN1041 | 1407370 | 1299        | 15       | 1314                 |
-| 5/5/2025 1:16   | PHN1041 | 1407370 | 1284        | 15       | 1299                 |
-| 5/5/2025 0:46   | PHN1041 | 1407370 | 1269        | 15       | 1284                 |
-| 4/17/2025 5:04  | PHN1041 | 1407199 | 1254        | 15       | 1269                 |
-| 4/17/2025 4:50  | PHN1041 | 1407199 | 1244        | 10       | 1254                 |
-| 4/17/2025 4:26  | PHN1041 | 1407199 | 1234        | 10       | 1244                 |
-| 4/17/2025 4:12  | PHN1041 | 1407199 | 1224        | 10       | 1234                 |
-| 4/16/2025 3:47  | PHN1041 | 1407346 | 1207        | 17       | 1224                 |
-| 4/16/2025 3:28  | PHN1041 | 1407346 | 1192        | 15       | 1207                 |
-| 4/1/2025 3:11   | PHN1041 | 1407346 | 1186        | 6        | 1192                 |
-| 3/29/2025 2:34  | PHN1041 | 1407346 | 1046        | 140      | 1186                 |
-| 3/27/2025 19:47 | PHN1041 | 1407346 | 1031        | 15       | 1046                 |
+1. The `PO_Quantity` is deducted from the starting on-hand quantity, producing the `Previous Qty` value: <br>
+      **1404** (ON_HAND_QTY)- **20**(PO_Quantity)= **1384** (Previous_Qty)
+2. The next PO transaction is subtracted from the `Previous Qty`, continuing the process of inventory depletion.
+
+If today were **May 30, 2025**, and **PHN1041** had a starting on-hand quantity of **1,404**, the table below illustrates how the data model calculates inventory age based on PO transactions.
+
+| ACTION_DATE/TIME  | PART_ID  | PO_ID   | PO_LINE | Previous_Qty | PO_Quantity | Total_Qty_At_PO_Date | Date_Bucket |
+|------------------|---------|--------|--------|--------------|------------|----------------------|-------------|
+| 5/8/2025 4:12   | PHN1041 | 1406373 | 1      | 1384        | 20         | 1404                 | 1           |
+| 5/8/2025 2:20   | PHN1041 | 1406373 | 2      | 1364        | 20         | 1384                 | 1           |
+| 5/5/2025 3:28   | PHN1041 | 1407370 | 1      | 1354        | 10         | 1364                 | 1           |
+| 5/5/2025 3:11   | PHN1041 | 1407370 | 2      | 1339        | 15         | 1354                 | 1           |
+| 5/5/2025 2:34   | PHN1041 | 1407370 | 3      | 1324        | 15         | 1339                 | 1           |
+| 5/5/2025 1:52   | PHN1041 | 1407370 | 4      | 1314        | 10         | 1324                 | 1           |
+| 5/5/2025 1:39   | PHN1041 | 1407370 | 5      | 1299        | 15         | 1314                 | 1           |
+| 5/5/2025 1:16   | PHN1041 | 1407370 | 6      | 1284        | 15         | 1299                 | 1           |
+| 5/5/2025 0:46   | PHN1041 | 1407370 | 7      | 1269        | 15         | 1284                 | 1           |
+| 4/17/2025 5:04  | PHN1041 | 1407199 | 1      | 1254        | 15         | 1269                 | 2           |
+| 4/17/2025 4:50  | PHN1041 | 1407199 | 2      | 1244        | 10         | 1254                 | 2           |
+| 4/17/2025 4:26  | PHN1041 | 1407199 | 3      | 1234        | 10         | 1244                 | 2           |
+| 4/17/2025 4:12  | PHN1041 | 1407199 | 4      | 1224        | 10         | 1234                 | 2           |
+| 4/16/2025 3:47  | PHN1041 | 1407346 | 1      | 1207        | 17         | 1224                 | 2           |
+| 4/16/2025 3:28  | PHN1041 | 1407346 | 2      | 1192        | 15         | 1207                 | 2           |
+| 4/1/2025 3:11   | PHN1041 | 1407346 | 3      | 1186        | 6          | 1192                 | 3           |
+| 3/29/2025 2:34  | PHN1041 | 1407346 | 4      | 1046        | 140        | 1186                 | 4           |
+| 3/27/2025 19:47 | PHN1041 | 1407346 | 5      | 1031        | 15         | 1046                 | 4           |
+
 
 ### Total_Qty_At_PO_Date (Calculated Column)
 ```
 Total_Qty_At_PO_Date = 
 VAR CurrentDate = [ACTION DATE/TIME]
 VAR PartID = [PART_ID]
+
 VAR StartingValue =
     CALCULATE(
         SUM('STOCK_STATUS'[ON_HAND_QTY]),
         ALLEXCEPT('STOCK_STATUS', 'STOCK_STATUS'[PART_ID]),
         'INVENTORY_TRANSACTION'[ACTION DATE/TIME] <= CurrentDate
     )
+
 VAR CumulativeTotal =
     StartingValue +
     CALCULATE(
@@ -92,7 +101,12 @@ VAR CumulativeTotal =
                 'INVENTORY_TRANSACTION'[PART_ID] = PartID &&
                  'INVENTORY_TRANSACTION'[ACTION DATE/TIME]  > CurrentDate
             ),
-            - 'INVENTORY_TRANSACTION'[PO_Quantity] 
+            - 'INVENTORY_TRANSACTION'[PO_Quantity]  // Subtract QUANTITY (PO Qty)
+        )
+    )
+
+RETURN
+    CumulativeTotal
 ```
 ### Previous_Qty (Calculated Column)
 ```
@@ -102,3 +116,5 @@ IF(
         0,
         'INVENTORY_TRANSACTION'[Total_Qty_At_PO_Date]-'INVENTORY_TRANSACTION'[PO_Quantity] )
 ```
+## AGING_INVENTORY_MATRIX
+-Unique Part_IDS, logic and calculations etc
