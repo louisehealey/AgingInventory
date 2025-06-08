@@ -1,23 +1,17 @@
 # Aging Inventory
-This Power BI report analyzes aging inventory by categorizing total cost and stock quantities into time-based buckets. These buckets allow users to track stock movement, identify slow-moving items, and optimize inventory turnover to improve efficiency and reduce waste.
+This Power BI report analyzes aging inventory by categorizing stock quantities into time-based buckets. These buckets allow users to track stock movement, identify slow-moving items, and optimize inventory turnover to improve efficiency and reduce waste.
 
 Since most components are not serialized, tracking individual part movement is a challenge. To estimate how long stock has remained at the facility, this report leverages Purchase Order Transactions and assumes a FIFO (First-In, First-Out) inventory management approach.
-### Total Cost Report
-<p align="center">
-  <img src="https://raw.githubusercontent.com/louisehealey/AgingInventory/main/AgingInventoryDashboard-TotalCost.png"
-      >
-</p>
 
 ### Total Quantity Report
+
 <p align="center">
   <img src="https://raw.githubusercontent.com/louisehealey/AgingInventory/main/AgingInventoryDashboard-TotalQuantity.png"
       >
 </p>
 
-
-## Data Model Overview
-
-This data model integrates multiple tables to effectively manage and analyze inventory aging. 
+## Data Model Overview 
+This data model integrates 4 tables to analyze aging inventory
 
 - **`PART_MANAGER`**: Contains detailed attributes of each part including description, commodity and unit cost.
 - **`INVENTORY_TRANSACTION`**: Log of inventory transactions used for tracking stock age by individual transactions.
@@ -117,7 +111,7 @@ IF(
         'INVENTORY_TRANSACTION'[Total_Qty_At_PO_Date]-'INVENTORY_TRANSACTION'[PO_Quantity] )
 ```
 ## Creating the 'AGING_INVENTORY_MATRIX' table
-**1.**Starts with establishing a new table that pulls the 'PART_ID' and 'ON_HAND_QTY 'fields from the 'STOCK_STATUS' table. The 'STOCK_STATUS' provides a unique list of all Part IDs and their associated inventory levels, making it the best table to summarize the data.
+**1.** Starts with establishing a new table that pulls the 'PART_ID' and 'ON_HAND_QTY 'fields from the 'STOCK_STATUS' table. The 'STOCK_STATUS' provides a unique list of all Part IDs and their associated inventory levels, making it the best table to summarize the data.
 ```
 AGING_INVENTORY_MATRIX= 
     SELECTCOLUMNS(T
@@ -157,7 +151,6 @@ IF(
     )
 )
 ```
-This Same process is repeated for creating each of the 6 'DateBucket#_QTY' columns
-
-**4.**
-
+The same process is repeated to create each of the six 'DateBucket#_QTY' columns. While the same code is used, this clause is modified to reflect the desired date bucket: <br> 
+```
+'INVENTORY_TRANSACTION'[DateBucket] = # && 'AGING_INVENTORY_MATRIX'[PART_ID] = 'INVENTORY_TRANSACTION'[PART_ID] 
