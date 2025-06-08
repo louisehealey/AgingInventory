@@ -116,5 +116,45 @@ IF(
         0,
         'INVENTORY_TRANSACTION'[Total_Qty_At_PO_Date]-'INVENTORY_TRANSACTION'[PO_Quantity] )
 ```
-## AGING_INVENTORY_MATRIX
--Unique Part_IDS, logic and calculations etc
+## Creating the 'AGING_INVENTORY_MATRIX' table
+**1.** Starts with establishing a new table that pulls the 'PART_ID' and 'ON_HAND_QTY 'fields from the 'STOCK_STATUS' table. The 'STOCK_STATUS' provides a unique list of all Part IDs and their associated inventory levels, making it the best table to summarize the data.
+```
+AGING_INVENTORY_MATRIX= 
+    SELECTCOLUMNS(T
+        "PART_ID", STOCK_STATUS[PART_ID],
+        "ON_HAND_QTY", STOCK_STATUS[ON_HAND_QTY]
+    )
+```
+**2.**  Retrieve the Standard Unit Cost for each Part ID using a straightforward 'LOOKUPVALUE' function, ensuring blank values are handled effectively.
+```
+Unit Cost =
+VAR UC =
+    LOOKUPVALUE('PART_MANAGER'[Unit Cost], 'PART_MANAGER'[Part ID], 'AGING_INVENTORY_MATRIX'[Part ID])
+RETURN
+    IF(ISBLANK(UC), 0, UC)
+```
+**3.** Establish a calculated column that calculates the 'PO_Quantity' for the first date bucket by Part ID
+```
+DateBucket1_QTY =
+
+IF(
+    ISBLANK(
+        SUMX(
+            FILTER(
+                'INVENTORY_TRANSACTION',
+                'INVENTORY_TRANSACTION'[DateBucket] = 1 && 'AGING_INVENTORY_MATRIX'[PART_ID] = 'INVENTORY_TRANSACTION'[PART_ID] && 'INVENTORY_TRANSACTION'[PO_Quantity]>0
+            ),
+            'INVENTORY_TRANSACTION'[PO_Quantity]
+        )
+    ),
+    0,
+    SUMX(
+        FILTER(
+            'INVENTORY_TRANSACTION',
+            'INVENTORY_TRANSACTION'[DateBucket] = 1 && 'AGING_INVENTORY_MATRIX'[PART_ID] = 'INVENTORY_TRANSACTION'[PART_ID] && 'INVENTORY_TRANSACTION'[PO_Quantity]>0
+        ),
+        'INVENTORY_TRANSACTION'[PO_Quantity]
+    )
+)
+```
+
