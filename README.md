@@ -117,7 +117,7 @@ IF(
         'INVENTORY_TRANSACTION'[Total_Qty_At_PO_Date]-'INVENTORY_TRANSACTION'[PO_Quantity] )
 ```
 ## Creating the 'AGING_INVENTORY_MATRIX' table
-**1.** Starts with establishing a new table that pulls the 'PART_ID' and 'ON_HAND_QTY 'fields from the 'STOCK_STATUS' table. The 'STOCK_STATUS' provides a unique list of all Part IDs and their associated inventory levels, making it the best table to summarize the data.
+**1.**Starts with establishing a new table that pulls the 'PART_ID' and 'ON_HAND_QTY 'fields from the 'STOCK_STATUS' table. The 'STOCK_STATUS' provides a unique list of all Part IDs and their associated inventory levels, making it the best table to summarize the data.
 ```
 AGING_INVENTORY_MATRIX= 
     SELECTCOLUMNS(T
@@ -157,4 +157,7 @@ IF(
     )
 )
 ```
+This Same process is repeated for creating each of the 6 'DateBucket#_QTY' columns
+
+**4.**
 
