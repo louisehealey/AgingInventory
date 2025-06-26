@@ -1,7 +1,7 @@
 # Aging Inventory
 This Power BI report analyzes aging inventory by categorizing stock quantities into time-based buckets. These buckets allow users to track stock movement, identify slow-moving items, and optimize inventory turnover to improve efficiency and reduce waste.
 
-Since most components are not serialized, tracking individual part movement is a challenge. To estimate how long stock has remained at the facility, this report leverages Purchase Order Transactions and assumes a FIFO (First-In, First-Out) inventory management approach.
+Tracking the movement of individual parts is challenging, as most components aren't serialized. To estimate how long inventory has remained at the facility, this report relies on Purchase Order Transactions and assumes a First-In, First-Out (FIFO) inventory management approach.
 
 ### Total Quantity Report
 
@@ -24,7 +24,7 @@ This data model integrates 4 tables to analyze aging inventory
 </p>
 
 ## How to Calculate the Time Based Buckets?
-The calculated column below determines how old each transaction is based on it's `ACTION DATE/TIME`
+The calculated column below determines the age of each transaction based on its `ACTION DATE/TIME`. This value represents the timestamp when each PO line was received.
 ```
 DateBucket =
 SWITCH(
@@ -39,7 +39,7 @@ SWITCH(
 ```
 ## Calculating Aging Inventory
 
-Starting with the current `ON_HAND_QTY` of a specified part, the most recent purchase order (`PO`) transaction quantity is subtracted. The transaction is then classified into a `Date bucket` based on its corresponding `ACTION DATE/TIME` value. This process continues until the total `ON_HAND_QTY` is accounted for.
+Starting with the current `ON_HAND_QTY` of a specified part, the most recent purchase order (PO) transaction quantity is subtracted. The transaction is then classified into a `Date bucket` based on its corresponding `ACTION DATE/TIME` value. This process continues until the total `ON_HAND_QTY` is accounted for.
 
 ### Example Calculation
 
@@ -95,7 +95,7 @@ VAR CumulativeTotal =
                 'INVENTORY_TRANSACTION'[PART_ID] = PartID &&
                  'INVENTORY_TRANSACTION'[ACTION DATE/TIME]  > CurrentDate
             ),
-            - 'INVENTORY_TRANSACTION'[PO_Quantity]  // Subtract QUANTITY (PO Qty)
+            - 'INVENTORY_TRANSACTION'[PO_Quantity]
         )
     )
 
@@ -111,7 +111,7 @@ IF(
         'INVENTORY_TRANSACTION'[Total_Qty_At_PO_Date]-'INVENTORY_TRANSACTION'[PO_Quantity] )
 ```
 ## Creating the 'AGING_INVENTORY_MATRIX' table
-**1.** Starts with establishing a new table that pulls the 'PART_ID' and 'ON_HAND_QTY 'fields from the 'STOCK_STATUS' table. The 'STOCK_STATUS' provides a unique list of all Part IDs and their associated inventory levels, making it the best table to summarize the data.
+**1.** Starts with establishing a new table that pulls the `PART_ID` and `ON_HAND_QTY` fields from the `STOCK_STATUS` table. The `STOCK_STATUS` provides a unique list of all Part IDs and their associated inventory levels, making it the best table to summarize the data.
 ```
 AGING_INVENTORY_MATRIX= 
     SELECTCOLUMNS(T
@@ -154,3 +154,9 @@ IF(
 The same process is repeated to create each of the six 'DateBucket#_QTY' columns. While the same code is used, this clause is modified to reflect the desired date bucket: <br> 
 ```
 'INVENTORY_TRANSACTION'[DateBucket] = # && 'AGING_INVENTORY_MATRIX'[PART_ID] = 'INVENTORY_TRANSACTION'[PART_ID] 
+```
+Using the **Standard Unit Cost** is beneficial when the report is intended for accounting purposes, financial reporting, establishing consistency, or eliminating the effects of price fluctuations over time. Using the standard unit cost Itis also helpful if historical data is inaccurate or missing.
+
+Alternatively, the **Purchase Order (PO) Unit Cost** is more appropriate when the goal is to reflect the actual cost associated with each time bucket or to analyze pricing trends across different purchase periods.
+
+To calculate the total cost, multiply the PO Unit Cost by the `PO_Quantities` for each row. Then, sum these row-level totals within each designated time bucket to determine the overall cost.
